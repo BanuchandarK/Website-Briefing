@@ -1,0 +1,462 @@
+// Website Briefer - Created by Banuchandar K - https://github.com/BanuchandarK
+// Input Brief number, Section header , banner count and details and Export to HTML.
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+:root {
+--primary-color: #00539F;
+--secondary-color: #FCD700;
+--border-color: #e0e0e0;
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    margin: 20px;
+    background: #f8f9fa;
+    line-height: 1.6;
+}
+.brief-header {
+    margin-bottom: 0px;
+}
+.brief-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    width: 98%;
+    padding: 15px;
+    border: none;
+    border-bottom: 3px solid var(--primary-color);
+    background: transparent;
+    margin-bottom: 30px;
+}
+.section-container {
+    margin-bottom: 30px;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-color);
+}
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    border: none;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    width: 80%;
+}
+.banner-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+}
+.banner-card {
+    padding: 0px;
+    border-radius: 8px;
+    background: white;
+    border: 1px solid var(--border-color);
+    transition: transform 0.1s ease;
+}
+.banner-card:hover {
+    transform: translateY(-2px);
+}
+.lang-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    border-radius: 6px;
+}
+.lang-section.en {
+    background: #f5faff;
+    border-left: 4px solid var(--primary-color);
+}
+.lang-section.xx {
+    background: #fff9e6;
+    border-left: 4px solid var(--secondary-color);
+}
+.lang-section h4 {
+    margin: 0 0 0px 0;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.field-group strong {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.field-group {
+    margin: 0px 0;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.field-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.field-content {
+    margin-left: 20px;
+    color: #2c3e50;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+input, textarea {
+    width: 95%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s ease;
+}
+input:focus, textarea:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0,83,159,0.1);
+}
+.button-container {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    padding: 20px 0;
+}
+button {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: opacity 0.2s ease;
+}
+button:hover {
+    opacity: 0.9;
+}
+.copy-icon {
+    cursor: pointer;
+    color: #00539F;
+    font-size: 0.9em;
+}
+.copy-icon:hover {
+    opacity: 1;
+}
+.copy-popup {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--primary-color);
+    color: white;
+    padding: 12px 25px;
+    border-radius: 6px;
+    display: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    font-size: 0.9rem;
+    z-index: 1000;
+    animation: fadeOut 1s ease 1s forwards;
+}
+@keyframes fadeOut {
+from {
+opacity: 1;
+}
+to {
+opacity: 0;
+}
+}
+select {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    font-size: 0.9rem;
+}
+</style>
+</head>
+<body>
+<div class="brief-header">
+  <input type="text" class="brief-title" placeholder="Enter Brief Title">
+</div>
+<div id="builder">
+  <div id="sections-container"></div>
+  <div class="button-container">
+    <button onclick="addSection()">Add Section</button>
+    <button onclick="exportBrief()">Export Brief</button>
+  </div>
+</div>
+<div class="copy-popup" id="copyPopup">Copied!</div>
+<script>
+        let sections = [];
+        
+        function addSection() {
+            const sectionId = Date.now();
+            const sectionHTML = `
+                <div class="section-container" data-id="${sectionId}">
+                    <div class="section-header">
+                        <input class="section-title" placeholder="Section Title">
+                        <select onchange="updateBanners(${sectionId}, this.value)">
+                            <option value="1">1 Banner</option>
+                            <option value="2">2 Banners</option>
+                            <option value="3">3 Banners</option>
+                            <option value="4">4 Banners</option>
+                        </select>
+                    </div>
+                    <div class="banner-grid" id="banners-${sectionId}">
+                        ${createBannerInputs(sectionId, 1)}
+                    </div>
+                </div>
+            `;
+            document.getElementById('sections-container').insertAdjacentHTML('beforeend', sectionHTML);
+        }
+
+        function createBannerInputs(sectionId, count) {
+            let html = '';
+            for (let i = 0; i < count; i++) {
+                html += `
+                    <div class="banner-card">
+                        <div class="lang-section en">
+                            <h4>English (EN)</h4>
+                            ${createInputFields('en')}
+                        </div>
+                        <div class="lang-section xx">
+                            <h4>Regional Language (XX)</h4>
+                            ${createInputFields('xx')}
+                        </div>
+                        <div class="field-group">
+                            <textarea placeholder="General Comments" rows="2"></textarea>
+                        </div>
+                    </div>
+                `;
+            }
+            return html;
+        }
+
+        function createInputFields(lang) {
+            return `
+                <div class="field-group">
+                    <input type="text" placeholder="Headline (${lang.toUpperCase()})">
+                </div>
+                <div class="field-group">
+                    <input type="text" placeholder="Subheadline (${lang.toUpperCase()})">
+                </div>
+                <div class="field-group">
+                    <input type="text" placeholder="CTA (${lang.toUpperCase()})">
+                </div>
+                <div class="field-group">
+                    <input type="text" placeholder="Link URL (${lang.toUpperCase()})">
+                </div>
+                <div class="field-group">
+                    <input type="text" placeholder="Image URL (${lang.toUpperCase()})">
+                </div>
+            `;
+        }
+
+        function updateBanners(sectionId, count) {
+            const container = document.querySelector(`[data-id="${sectionId}"] .banner-grid`);
+            container.innerHTML = createBannerInputs(sectionId, count);
+        }
+
+        function exportBrief() {
+            const briefTitle = document.querySelector('.brief-title').value;
+            const sectionsData = Array.from(document.querySelectorAll('.section-container')).map(section => ({
+                title: section.querySelector('.section-title').value,
+                banners: Array.from(section.querySelectorAll('.banner-card')).map(banner => ({
+                    en: getLangData(banner, 'en'),
+                    xx: getLangData(banner, 'xx'),
+                    comments: banner.querySelector('textarea').value
+                }))
+            }));
+
+            const exportHTML = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body {
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                            margin: 30px;
+                            background: #f8f9fa;
+                        }
+                        .export-title {
+                            font-size: 2.5rem;
+                            color: #00539F;
+                            margin-bottom: 40px;
+                            font-weight: 700;
+                            border-bottom: 3px solid #00539F;
+                            padding-bottom: 15px;
+                        }
+                        .section-container {
+                            margin-bottom: 40px;
+                            background: white;
+                            padding: 30px;
+                            border-radius: 12px;
+                            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                            border: 1px solid #e0e0e0;
+                        }
+                        .section-title {
+                            font-size: 1.4rem;
+                            color: #00539F;
+                            margin-bottom: 25px;
+                            font-weight: 600;
+                        }
+                        .banner-grid {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                            gap: 25px;
+                        }
+                        .banner-card {
+                            padding: 0px;
+                            background: white;
+                            border-radius: 8px;
+                            border: 1px solid #e0e0e0;
+                        }
+                        .lang-section {
+                            margin-bottom: 25px;
+                            padding: 20px;
+                            border-radius: 8px;
+                        }
+                        .lang-section.en {
+                            background: #f5faff;
+                            border-left: 4px solid #00539F;
+                        }
+                        .lang-section.xx {
+                            background: #fff9e6;
+                            border-left: 4px solid #FCD700;
+                        }
+                        .lang-section h4 {
+                            margin: 0 0 15px 0;
+                            color: #2c3e50;
+                        }
+                        .field-group {
+                            margin: 10px 25px;
+                            padding: 0px 0;
+                            border-bottom: 1px solid #f0f0f0;
+                        }
+                        .copy-icon {
+                            cursor: pointer;
+                            color: #00539F;
+                            margin-left: 0px;
+                        }
+                        .copy-popup {
+                            position: fixed;
+                            top: 20px;
+                            right: 20px;
+                            background: #00539F;
+                            color: white;
+                            padding: 12px 25px;
+                            border-radius: 6px;
+                            display: none;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                            z-index: 1000;
+                            animation: fadeOut 1s ease 1s forwards;
+                        }
+                        @keyframes fadeOut {
+                            from { opacity: 1; }
+                            to { opacity: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${briefTitle ? `<h1 class="export-title">${briefTitle}</h1>` : ''}
+                    ${sectionsData.map(section => `
+                        <div class="section-container">
+                            ${section.title ? `<div class="section-title">${section.title}</div>` : ''}
+                            <div class="banner-grid">
+                                ${section.banners.map(banner => `
+                                    <div class="banner-card">
+                                        ${renderLangSection('English (EN)', banner.en, 'en')}
+                                        ${renderLangSection('Regional Language (XX)', banner.xx, 'xx')}
+                                        
+${banner.comments ? `
+    <div class="field-group">
+        <div class="field-label">
+            <strong>Comments:</strong>
+        </div>
+        <div class="field-content" style="margin-left: 15px;">${banner.comments}</div>
+    </div>
+` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                    <div class="copy-popup" id="copyPopup">Copied!</div>
+                    <script>
+                        function copyText(text) {
+                            navigator.clipboard.writeText(text);
+                            const popup = document.getElementById('copyPopup');
+                            popup.style.display = 'block';
+                            setTimeout(() => popup.style.display = 'none', 1000);
+                        }
+                        function escapeText(str) {
+                            return str ? str.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+                        }
+                    <\/script>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob([exportHTML], {type: 'text/html'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'brief-export.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function getLangData(banner, lang) {
+            const prefix = lang.toUpperCase();
+            return {
+                headline: banner.querySelector(`input[placeholder="Headline (${prefix})"]`)?.value || '',
+                subheadline: banner.querySelector(`input[placeholder="Subheadline (${prefix})"]`)?.value || '',
+                cta: banner.querySelector(`input[placeholder="CTA (${prefix})"]`)?.value || '',
+                link: banner.querySelector(`input[placeholder="Link URL (${prefix})"]`)?.value || '',
+                image: banner.querySelector(`input[placeholder="Image URL (${prefix})"]`)?.value || ''
+            };
+        }
+
+        function renderLangSection(title, data, langClass) {
+    return `
+        <div class="lang-section ${langClass}">
+            <h4>${title}</h4>
+            ${renderField('Headline', data.headline)}
+            ${renderField('Subheadline', data.subheadline)}
+            ${renderField('CTA', data.cta)}
+            ${renderField('Link URL', data.link)}
+            ${renderField('Image URL', data.image)}
+        </div>
+    `;
+}
+
+        function renderField(label, value) {
+    return value ? `
+        <div class="field-group">
+            <div class="field-label">
+                <span class="copy-icon" onclick="copyText('${escapeText(value)}')">📋</span>
+                <strong>${label}:</strong>
+            </div>
+            <div class="field-content" style="margin-left: 20px; ">${value}</div>
+        </div>
+    ` : '';
+}
+
+        function escapeText(str) {
+            return str ? str.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+        }
+    </script>
+</body>
+</html>
